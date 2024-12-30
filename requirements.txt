@@ -1,0 +1,4 @@
+phi-agent
+supabase
+python-dotenv
+anthropic 
