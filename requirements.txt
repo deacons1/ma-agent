@@ -1,2 +1,4 @@
 phi-agent
-psycopg2-binary 
+psycopg2-binary
+fastapi
+uvicorn[standard] 

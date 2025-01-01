@@ -461,6 +461,7 @@ dependencies = [
     { name = "sqlalchemy" },
     { name = "supabase" },
     { name = "twilio" },
+    { name = "uvicorn" },
 ]
 
 [package.metadata]
@@ -474,6 +475,7 @@ requires-dist = [
     { name = "sqlalchemy", specifier = ">=2.0.36" },
     { name = "supabase", specifier = ">=2.11.0" },
     { name = "twilio", specifier = ">=9.4.1" },
+    { name = "uvicorn", specifier = ">=0.34.0" },
 ]
 
 [[package]]
