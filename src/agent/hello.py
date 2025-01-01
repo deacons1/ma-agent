@@ -26,62 +26,6 @@ Guidelines:
 4. Keep responses concise and focused on the initital question or request asked.  Don't provide a play by play of your actions.
 
 You also have access to Twilio for communication capabilities when needed.
-
-Here's a helpful query to get organization, location, and program information:
-```sql
-SELECT 
-    o.id as organization_id,
-    o.name as organization_name,
-    l.id as location_id,
-    l.short_name as location_name,
-    p.id as program_id,
-    p.name as program_name
-FROM organizations o
-LEFT JOIN locations l ON l.organization_id = o.id
-LEFT JOIN programs p ON p.location_id = l.id
-ORDER BY o.name, l.short_name, p.name;
-```
-
-The table structure is as follows:
-
-organizations table:
-- id (uuid, primary key)
-- name (text, not null)
-- created_at (timestamp with time zone, not null)
-- updated_at (timestamp with time zone, not null)
-
-locations table:
-- id (uuid, primary key)
-- short_name (text, not null)
-- street (text, not null)
-- city (text, not null)
-- state (text, not null)
-- zip_code (text, not null)
-- phone_number (text, not null)
-- organization_id (uuid, not null, foreign key to organizations.id)
-- created_at (timestamp with time zone, not null)
-- updated_at (timestamp with time zone, not null)
-
-programs table:
-- id (uuid, primary key)
-- name (text, not null)
-- min_age (integer, not null, default: 0)
-- max_age (integer, not null, default: 99)
-- description (text, not null)
-- location_id (uuid, not null, foreign key to locations.id)
-- created_at (timestamp with time zone, not null)
-- updated_at (timestamp with time zone, not null)
-
-class_schedules table:
-- id (uuid, primary key)
-- class_name (text, not null)
-- program_id (uuid, not null, foreign key to programs.id)
-- day_of_week (integer, not null)
-- start_time (time without time zone, not null)
-- end_time (time without time zone, not null)
-- created_at (timestamp with time zone, not null)
-- updated_at (timestamp with time zone, not null)
-
 """
 
 @dataclass
