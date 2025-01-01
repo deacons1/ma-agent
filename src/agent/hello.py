@@ -27,6 +27,21 @@ Guidelines:
 
 You also have access to Twilio for communication capabilities when needed.
 
+Here's a helpful query to get organization, location, and program information:
+```sql
+SELECT 
+    o.id as organization_id,
+    o.name as organization_name,
+    l.id as location_id,
+    l.short_name as location_name,
+    p.id as program_id,
+    p.name as program_name
+FROM organizations o
+LEFT JOIN locations l ON l.organization_id = o.id
+LEFT JOIN programs p ON p.location_id = l.id
+ORDER BY o.name, l.short_name, p.name;
+```
+
 The table structure is as follows:
 
 organizations table:
@@ -108,6 +123,46 @@ class AgentConfig:
     markdown: bool = True
     instructions: str = AGENT_INSTRUCTIONS
 
+def get_org_data(db_url: str, user_id: str) -> str:
+    """Fetch organization data and format it for instructions"""
+    sql = SQLTools(db_url=db_url)
+    query = """
+    WITH user_org AS (
+        SELECT organization_id 
+        FROM profiles 
+        WHERE id = %(user_id)s
+    )
+    SELECT 
+        o.id as organization_id,
+        o.name as organization_name,
+        l.id as location_id,
+        l.short_name as location_name,
+        p.id as program_id,
+        p.name as program_name
+    FROM user_org
+    JOIN organizations o ON o.id = user_org.organization_id
+    LEFT JOIN locations l ON l.organization_id = o.id
+    LEFT JOIN programs p ON p.location_id = l.id
+    ORDER BY o.name, l.short_name, p.name;
+    """
+    try:
+        results = sql.query(query, parameters={"user_id": user_id})
+        
+        if not results:
+            return "No organization data found for this user."
+        
+        formatted = "Current Organization Structure:\n"
+        for row in results:
+            formatted += f"\nOrg: {row['organization_name']} ({row['organization_id']})"
+            if row['location_id']:
+                formatted += f"\n  Location: {row['location_name']} ({row['location_id']})"
+                if row['program_id']:
+                    formatted += f"\n    Program: {row['program_name']} ({row['program_id']})"
+        
+        return formatted
+    except Exception as e:
+        return f"Error fetching organization data: {str(e)}"
+
 class AgentFactory:
     """Factory class for creating and configuring agents"""
     
@@ -142,6 +197,12 @@ class AgentFactory:
     
     def create_agent(self, run_id: Optional[str] = None, user_id: str = "0d2425a9-0663-4795-b9cb-52b1343a82de") -> Agent:
         """Create a fully configured agent"""
+        # Get organization data for this user
+        org_data = get_org_data(self.db_config.url, user_id)
+        
+        # Update instructions with org data
+        instructions = AGENT_INSTRUCTIONS + "\n\n" + org_data
+        
         agent = Agent(
             run_id=run_id,
             user_id=user_id,
@@ -155,7 +216,7 @@ class AgentFactory:
             num_history_responses=self.agent_config.num_history_responses,
             show_tool_calls=self.agent_config.show_tool_calls,
             markdown=self.agent_config.markdown,
-            instructions=self.agent_config.instructions,
+            instructions=instructions,
             monitoring=True,
         )
         
