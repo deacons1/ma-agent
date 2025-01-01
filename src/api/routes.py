@@ -4,18 +4,16 @@ from typing import Optional
 import os
 from dotenv import load_dotenv
 
-from src.agent.hello import AgentFactory, DatabaseConfig, validate_environment
+from src.agent.agent_factory import AgentFactory
 
 # Load environment variables
 load_dotenv()
-validate_environment()
 
 # Initialize FastAPI app
 app = FastAPI(title="PhiAgent API")
 
-# Create database config and agent factory
-db_config = DatabaseConfig.from_url(os.getenv("DATABASE_URL"))
-factory = AgentFactory(db_config)
+# Create agent factory
+factory = AgentFactory(db_url=os.getenv("DATABASE_URL"))
 
 class PromptRequest(BaseModel):
     """Request model for prompt endpoint"""
@@ -33,11 +31,7 @@ async def handle_prompt(request: PromptRequest) -> PromptResponse:
     """Handle an agent prompt request"""
     try:
         # Create agent instance
-        agent = factory.create_agent(
-            run_id=request.run_id,
-            user_id=request.user_id,
-            debug_mode=True
-        )
+        agent = factory.create_agent()
         
         # Get response from agent
         run_response = agent.run(request.message)

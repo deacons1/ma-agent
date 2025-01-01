@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 
 from phi.agent import Agent
 from phi.model.anthropic import Claude
-from phi.tools.postgres import PostgresTools
+from phi.tools.sql import SQLTools
 from phi.tools.twilio import TwilioTools
 from phi.storage.agent.postgres import PgAgentStorage
 
@@ -136,16 +136,7 @@ class AgentFactory:
     def create_tools(self) -> List:
         """Create and configure agent tools"""
         return [
-            PostgresTools(
-                host=self.db_config.host,
-                port=self.db_config.port,
-                db_name=self.db_config.name,
-                user=self.db_config.user,
-                password=self.db_config.password,
-                run_queries=True,
-                inspect_queries=True,
-                summarize_tables=True
-            ),
+            SQLTools(db_url=self.db_config.url),
             TwilioTools(),
         ]
     
