@@ -35,7 +35,8 @@ async def handle_prompt(request: PromptRequest) -> PromptResponse:
         # Create agent instance
         agent = factory.create_agent(
             run_id=request.run_id,
-            user_id=request.user_id
+            user_id=request.user_id,
+            debug_mode=True
         )
         
         # Get response from agent
