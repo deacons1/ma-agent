@@ -1,11 +1,11 @@
-from typing import Dict, Any
+from typing import Dict, Any, List
 import json
 import os
 from phi.tools.sql import SQLTools
 from phi.tools import tool
 
 @tool(name="get_schema", description="Fetches the database schema for specified tables or all tables if none specified.")
-def get_schema(tables: str = None) -> str:
+def get_schema(tables: str = None) -> Dict[str, Any]:
     """Fetches database schema information.
     Args:
         tables: Optional comma-separated list of table names. If None, fetches all tables.
@@ -49,46 +49,48 @@ def get_schema(tables: str = None) -> str:
         FROM column_info ci
         LEFT JOIN table_comments tc ON ci.table_name = tc.table_name
         """
-        
+
+        parameters = {}
         if tables:
             table_list = [t.strip() for t in tables.split(',')]
-            query += f" WHERE ci.table_name = ANY(ARRAY{table_list})"
-            
+            query += " WHERE ci.table_name = ANY(%(table_list)s)"
+            parameters["table_list"] = table_list
+
         query += " ORDER BY table_name"
-        
-        result = sql_tools.run_sql_query(query)
+
+        result = sql_tools.run_sql_query(query, parameters=parameters)
         print("DEBUG - Raw Query Result:")
         print(json.dumps(result, indent=2))
-        
-        # Format the schema info into a readable string
-        schema_info = "Database Schema:\n\n"
+
+        # Format the schema info into a structured dictionary
+        schema_info: Dict[str, Any] = {}
         for table in result.get("rows", []):
-            schema_info += f"Table: {table['table_name']}\n"
-            if table['table_description']:
-                schema_info += f"Description: {table['table_description']}\n"
-            schema_info += "Columns:\n"
-            for col in table['columns']:
-                schema_info += f"    {col['column_name']} ({col['data_type']})"
-                if col['is_nullable'] == 'NO':
-                    schema_info += " NOT NULL"
-                if col['column_default']:
-                    schema_info += f" DEFAULT {col['column_default']}"
-                if col['description']:
-                    schema_info += f"\n      Description: {col['description']}"
-                schema_info += "\n"
-            schema_info += "\n"
-            
+            table_name = table["table_name"]
+            schema_info[table_name] = {
+                "description": table["table_description"],
+                "columns": [
+                    {
+                        "name": col["column_name"],
+                        "data_type": col["data_type"],
+                        "is_nullable": col["is_nullable"] == "YES",
+                        "default": col["column_default"],
+                        "description": col["description"],
+                    }
+                    for col in table["columns"]
+                ],
+            }
+
         print("DEBUG - Formatted Schema Info:")
         print(schema_info)
         return schema_info
-        
+
     except Exception as e:
         print("DEBUG - Error in get_schema:")
         print(str(e))
-        return json.dumps({
+        return {
             "error": str(e),
-            "message": "Failed to fetch schema"
-        })
+            "message": "Failed to fetch schema",
+        }
 
 @tool(name="run_sql_query", description="Executes a raw SQL query on the martial_arts_crm database and returns JSON.")
 def run_sql_query(query: str) -> str:

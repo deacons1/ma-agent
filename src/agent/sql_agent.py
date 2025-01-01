@@ -5,12 +5,8 @@ from phi.tools.sql import SQLTools
 import os
 from .tools import run_sql_query, get_schema
 
-def get_current_schema():
-    """Fetch the current database schema"""
-    schema_info = get_schema()
-    print("DEBUG - Schema Info:")
-    print(schema_info)
-    return schema_info
+# Use get_schema directly in instructions
+schema_info = get_schema()
 
 sql_agent = Agent(
     model=Claude(id=os.getenv("ANTHROPIC_MODEL")),
@@ -25,7 +21,7 @@ sql_agent = Agent(
     debug_mode=True,
     monitoring=True,
     instructions=f"""You are a SQL assistant that helps users query a PostgreSQL database.
-{get_current_schema()}
+{schema_info}
 
 When searching text fields, use ILIKE for case-insensitive pattern matching.
 Example: WHERE short_name ILIKE '%search_term%'
