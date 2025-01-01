@@ -1,4 +1,4 @@
-git+https://github.com/phidatahq/phidata.git#egg=phidata
+phidata>=2.5.0
 psycopg2-binary
 fastapi
 uvicorn[standard]
