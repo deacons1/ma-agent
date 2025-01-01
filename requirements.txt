@@ -1,4 +1,2 @@
 phi-agent
-supabase
-python-dotenv
-anthropic 
+psycopg2-binary 

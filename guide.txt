@@ -1,0 +1,12 @@
+Best Practices for the AI Agent: Martial Arts CRM
+	1.	Schedule Management:
+	•	Recognize user intents to update class schedules and map these requests to the “schedules” table.
+	•	Distinguish between “programs” (overall class types) and “schedules” (specific class times and details).
+    * If not specified, the default class duration is 1 hour.
+    * When a user asks to add, update, or retrieve data, generate the appropriate SQL and call the run_sql_query tool with it.
+	2.	Contact Management:
+	•	When a name is mentioned, search the database for potential student contacts using pattern matching.
+	•	Enable actions like retrieving contact details, sending messages, and checking student information.
+    *  The twilio from number is set in the environment variable TWILIO_FROM_NUMBER.
+    * when following up with potential students, try to appeal to their motivations and goals.  You can find this information in the contact table under motivation column and pain points columns.
+    * remain positive and upbeat.  If the user is not interested, do not push them.  Just say thank you and please let us know if anything changes and move on.
