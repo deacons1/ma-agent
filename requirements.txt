@@ -1,4 +1,5 @@
-phi-agent
+git+https://github.com/phidatahq/phidata.git#egg=phi-agent
 psycopg2-binary
 fastapi
-uvicorn[standard] 
+uvicorn[standard]
+python-dotenv 
