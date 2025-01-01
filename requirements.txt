@@ -1,4 +1,4 @@
-phidata>=2.5.0
+phidata
 psycopg2-binary
 fastapi
 uvicorn[standard]
