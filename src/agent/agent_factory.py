@@ -22,8 +22,6 @@ class AgentFactory:
 
     def __init__(self, db_url: str):
         self.db_url = db_url
-        # Get schema info directly
-        self.schema_info = get_schema()
         
     def create_agent(self, model: Optional[str] = None) -> Agent:
         """Create a new agent instance with SQL and Twilio tools"""
@@ -34,7 +32,6 @@ class AgentFactory:
                 TwilioTools(),
                 get_schema  # Add the schema tool to the agent's tools
             ],
-            instructions=self.schema_info,
             show_tool_calls=True,
             read_chat_history=True,
             markdown=True
