@@ -22,7 +22,8 @@ class AgentFactory:
 
     def __init__(self, db_url: str):
         self.db_url = db_url
-        self.schema_info = get_schema()
+        # Call the underlying function directly
+        self.schema_info = get_schema.function()
         
     def create_agent(self, model: Optional[str] = None) -> Agent:
         """Create a new agent instance with SQL and Twilio tools"""
