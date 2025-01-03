@@ -1,16 +1,107 @@
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 import json
 import os
+import re
 from phi.tools.sql import SQLTools
 from phi.tools import tool
 
+class SafeSQLTools(SQLTools):
+    """Extended SQLTools with safety measures and operation-specific methods"""
+    
+    def __init__(self, db_url: str, allow_insert: bool = True, allow_update: bool = True, 
+                 allow_delete: bool = False, allow_drop: bool = False):
+        super().__init__(db_url=db_url)
+        self.allow_insert = allow_insert
+        self.allow_update = allow_update
+        self.allow_delete = allow_delete
+        self.allow_drop = allow_drop
+
+    def validate_query(self, query: str) -> bool:
+        """Validates if the query is allowed based on configuration"""
+        query = query.lower().strip()
+        
+        # Check for DROP operations
+        if not self.allow_drop and ("drop table" in query or "drop database" in query):
+            raise ValueError("DROP operations are not allowed")
+            
+        # Check for DELETE operations    
+        if not self.allow_delete and "delete from" in query:
+            raise ValueError("DELETE operations are not allowed")
+            
+        # Check for UPDATE operations
+        if not self.allow_update and "update" in query:
+            raise ValueError("UPDATE operations are not allowed")
+            
+        # Check for INSERT operations    
+        if not self.allow_insert and "insert into" in query:
+            raise ValueError("INSERT operations are not allowed")
+            
+        return True
+
+@tool(name="select_query", description="Executes a SELECT query on the database. Only allows read operations.")
+def select_query(query: str) -> str:
+    """Executes a SELECT query using Supabase Postgres."""
+    sql_tools = SafeSQLTools(db_url=os.getenv("DATABASE_URL"))
+    try:
+        # Validate it's a SELECT query
+        if not query.lower().strip().startswith("select"):
+            raise ValueError("Only SELECT queries are allowed in this function")
+            
+        result = sql_tools.run_sql_query(query)
+        return json.dumps({
+            "rows": result.get("rows", []),
+            "count": len(result.get("rows", [])),
+            "message": "Query successful"
+        })
+    except Exception as e:
+        return json.dumps({
+            "error": str(e),
+            "message": "Query failed"
+        })
+
+@tool(name="insert_data", description="Inserts data into the specified table.")
+def insert_data(table: str, data: Dict[str, Any]) -> str:
+    """Inserts a row into the specified table."""
+    sql_tools = SafeSQLTools(db_url=os.getenv("DATABASE_URL"), allow_insert=True)
+    try:
+        columns = ", ".join(data.keys())
+        values = ", ".join([f"%({k})s" for k in data.keys()])
+        query = f"INSERT INTO {table} ({columns}) VALUES ({values}) RETURNING id"
+        
+        result = sql_tools.run_sql_query(query, parameters=data)
+        return json.dumps({
+            "message": "Insert successful",
+            "id": result.get("rows", [{}])[0].get("id")
+        })
+    except Exception as e:
+        return json.dumps({
+            "error": str(e),
+            "message": "Insert failed"
+        })
+
+@tool(name="update_data", description="Updates data in the specified table.")
+def update_data(table: str, data: Dict[str, Any], where_clause: str) -> str:
+    """Updates rows in the specified table."""
+    sql_tools = SafeSQLTools(db_url=os.getenv("DATABASE_URL"), allow_update=True)
+    try:
+        set_clause = ", ".join([f"{k} = %({k})s" for k in data.keys()])
+        query = f"UPDATE {table} SET {set_clause} WHERE {where_clause} RETURNING id"
+        
+        result = sql_tools.run_sql_query(query, parameters=data)
+        return json.dumps({
+            "message": "Update successful",
+            "count": len(result.get("rows", []))
+        })
+    except Exception as e:
+        return json.dumps({
+            "error": str(e),
+            "message": "Update failed"
+        })
+
 @tool(name="get_schema", description="Fetches the database schema for specified tables or all tables if none specified.")
 def get_schema(tables: str = None) -> Dict[str, Any]:
-    """Fetches database schema information.
-    Args:
-        tables: Optional comma-separated list of table names. If None, fetches all tables.
-    """
-    sql_tools = SQLTools(db_url=os.getenv("DATABASE_URL"))
+    """Fetches database schema information."""
+    sql_tools = SafeSQLTools(db_url=os.getenv("DATABASE_URL"))
     try:
         # Query to get table schema with descriptions
         query = """
@@ -59,8 +150,6 @@ def get_schema(tables: str = None) -> Dict[str, Any]:
         query += " ORDER BY table_name"
 
         result = sql_tools.run_sql_query(query, parameters=parameters)
-        print("DEBUG - Raw Query Result:")
-        print(json.dumps(result, indent=2))
 
         # Format the schema info into a structured dictionary
         schema_info: Dict[str, Any] = {}
@@ -80,31 +169,10 @@ def get_schema(tables: str = None) -> Dict[str, Any]:
                 ],
             }
 
-        print("DEBUG - Formatted Schema Info:")
-        print(schema_info)
         return schema_info
 
     except Exception as e:
-        print("DEBUG - Error in get_schema:")
-        print(str(e))
         return {
             "error": str(e),
             "message": "Failed to fetch schema",
-        }
-
-@tool(name="run_sql_query", description="Executes a raw SQL query on the martial_arts_crm database and returns JSON.")
-def run_sql_query(query: str) -> str:
-    """Executes SQL queries using Supabase Postgres."""
-    sql_tools = SQLTools(db_url=os.getenv("DATABASE_URL"))
-    try:
-        result = sql_tools.run_sql_query(query)
-        return json.dumps({
-            "rows": result.get("rows", []),
-            "count": len(result.get("rows", [])),
-            "message": "Query successful"
-        })
-    except Exception as e:
-        return json.dumps({
-            "error": str(e),
-            "message": "Query failed"
-        }) 
+        } 

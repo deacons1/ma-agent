@@ -1,7 +1,6 @@
 from phi.agent import Agent
 from phi.model.anthropic import Claude
-from phi.storage.assistant.postgres import PgAssistantStorage
-from phi.tools.sql import SQLTools
+from phi.storage.agent.postgres import PgAgentStorage
 import os
 from .tools import run_sql_query, get_schema
 
@@ -11,7 +10,7 @@ schema_info = get_schema()
 sql_agent = Agent(
     model=Claude(id=os.getenv("ANTHROPIC_MODEL")),
     tools=[run_sql_query, get_schema],
-    storage=PgAssistantStorage(
+    storage=PgAgentStorage(
         table_name="martial_arts_assistant",
         db_url=os.getenv("DATABASE_URL")
     ),

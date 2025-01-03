@@ -4,12 +4,11 @@ from typing import Optional, Callable
 
 from phi.agent import Agent
 from phi.model.anthropic import Claude
-from phi.tools.sql import SQLTools
 from phi.tools.twilio import TwilioTools
 
 from ..db.message_logger import MessageLogger
 from ..db.organization_service import OrganizationService
-from .tools import get_schema
+from .tools import get_schema, select_query, insert_data, update_data
 
 # Configure logging with more detail
 logging.basicConfig(
@@ -28,9 +27,11 @@ class AgentFactory:
         return Agent(
             model=Claude(id=model or os.getenv("ANTHROPIC_MODEL")),
             tools=[
-                SQLTools(db_url=self.db_url),
+                select_query,  # Read-only SQL queries
+                insert_data,   # Safe insert operations
+                update_data,   # Safe update operations
+                get_schema,    # Schema inspection
                 TwilioTools(),
-                get_schema  # Add the schema tool to the agent's tools
             ],
             show_tool_calls=True,
             read_chat_history=True,
