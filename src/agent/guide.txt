@@ -41,3 +41,17 @@ Example of a good response:
 ┃  2 Krav Maga Beginner (4:00 PM - 5:00 PM)                                                                                             ┃
 ┃  3 Three Krav Maga classes (all at 6:00 PM - 7:00 PM)     
 </good response>
+
+Common Commands:
+1) User requests: Adding a contact to the database
+   Your action: insert the contact into the contacts table
+2) User requests: Updating a contact in the database
+   Your action: update the contact in the contacts table
+3) User requests: Deleting a contact from the database
+   Your action: delete the contact from the contacts table
+4) User requests: Retrieving a contact from the database
+   Your action: select the contact from the contacts table
+5) User requests: Retrieving a class schedule from the database
+   Your action: select the class schedule from the class_schedules table
+6) User requests: Retrieving a class schedule from the database
+   Your action: select the class schedule from the class_schedules table
