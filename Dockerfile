@@ -16,7 +16,7 @@ WORKDIR /app
 RUN uv sync --frozen --no-cache
 
 # Create and set permissions for gunicorn temp directory
-RUN mkdir -p /dev/shm/gunicorn && chmod 777 /dev/shm/gunicorn
+RUN mkdir -p /tmp/gunicorn && chmod 777 /tmp/gunicorn
 
 # Run the application with gunicorn
-CMD ["/app/.venv/bin/gunicorn", "src.api.main:app", "-c", "gunicorn_config.py", "--worker-tmp-dir", "/dev/shm/gunicorn"] 
+CMD ["/app/.venv/bin/gunicorn", "src.api.main:app", "-c", "gunicorn_config.py", "--worker-tmp-dir", "/tmp/gunicorn"] 

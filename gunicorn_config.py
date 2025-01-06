@@ -1,8 +1,8 @@
 import multiprocessing
 import os
 
-# Get the PORT from environment variable
-port = os.getenv("PORT", "8000")
+# Get the PORT from environment variable (DigitalOcean uses 8080)
+port = os.getenv("PORT", "8080")
 
 # Gunicorn config variables
 workers = multiprocessing.cpu_count() * 2 + 1
@@ -20,4 +20,4 @@ errorlog = "-"
 loglevel = "info"
 
 # Worker temporary directory
-worker_tmp_dir = "/dev/shm/gunicorn" 
+worker_tmp_dir = "/tmp/gunicorn" 
