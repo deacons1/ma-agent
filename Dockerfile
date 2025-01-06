@@ -15,5 +15,5 @@ COPY . /app
 WORKDIR /app
 RUN uv sync --frozen --no-cache
 
-# Run the application
-CMD ["/app/.venv/bin/gunicorn", "src.api.main:app", "-c", "gunicorn_config.py"] 
+# Run the application with uvicorn
+CMD ["/app/.venv/bin/uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8080"] 
