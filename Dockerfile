@@ -15,9 +15,5 @@ COPY . /app
 WORKDIR /app
 RUN uv sync --frozen --no-cache
 
-# Create a startup script
-RUN echo '#!/bin/sh\nmkdir -p /tmp/gunicorn\nexec /app/.venv/bin/gunicorn src.api.main:app -c gunicorn_config.py --worker-tmp-dir /tmp/gunicorn' > /app/start.sh \
-    && chmod +x /app/start.sh
-
-# Run the startup script
-CMD ["/app/start.sh"] 
+# Run the application
+CMD ["/app/.venv/bin/gunicorn", "src.api.main:app", "-c", "gunicorn_config.py"] 

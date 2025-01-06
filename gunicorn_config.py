@@ -17,7 +17,4 @@ max_requests_jitter = 50
 # Logging
 accesslog = "-"
 errorlog = "-"
-loglevel = "info"
-
-# Worker temporary directory
-worker_tmp_dir = "/tmp/gunicorn" 
+loglevel = "info" 
