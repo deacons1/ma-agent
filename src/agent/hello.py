@@ -154,7 +154,7 @@ def validate_environment() -> None:
 
 def main() -> None:
     """Main application entry point"""
-    # Load environment variables
+    # Load environment variables hello
     load_dotenv()
     
     # Validate environment
