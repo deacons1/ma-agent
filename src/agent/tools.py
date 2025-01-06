@@ -1,27 +1,17 @@
-from typing import Dict, Any, Optional
+from typing import Dict, Any, List
 import json
-import logging
-from phi.tools import tool
+import os
 from phi.tools.sql import SQLTools
+from phi.tools import tool
 from ..db.config import get_db_url
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-def get_sql_tools() -> SQLTools:
-    """Get configured SQL tools instance"""
-    return SQLTools(db_url=get_db_url(use_connection_pooling=True))
-
 @tool(name="get_schema", description="Fetches the database schema for specified tables or all tables if none specified.")
-def get_schema(tables: Optional[str] = None) -> Dict[str, Any]:
+def get_schema(tables: str = None) -> Dict[str, Any]:
     """Fetches database schema information.
     Args:
         tables: Optional comma-separated list of table names. If None, fetches all tables.
-    Returns:
-        Dict containing schema information for requested tables
     """
-    sql_tools = get_sql_tools()
+    sql_tools = SQLTools(db_url=get_db_url(use_connection_pooling=True))
     try:
         # Query to get table schema with descriptions
         query = """
@@ -70,7 +60,9 @@ def get_schema(tables: Optional[str] = None) -> Dict[str, Any]:
         query += " ORDER BY table_name"
 
         result = sql_tools.run_sql_query(query, parameters=parameters)
-        
+        print("DEBUG - Raw Query Result:")
+        print(json.dumps(result, indent=2))
+
         # Format the schema info into a structured dictionary
         schema_info: Dict[str, Any] = {}
         for table in result.get("rows", []):
@@ -89,34 +81,31 @@ def get_schema(tables: Optional[str] = None) -> Dict[str, Any]:
                 ],
             }
 
+        print("DEBUG - Formatted Schema Info:")
+        print(schema_info)
         return schema_info
 
     except Exception as e:
-        logger.error(f"Error in get_schema: {str(e)}", exc_info=True)
+        print("DEBUG - Error in get_schema:")
+        print(str(e))
         return {
             "error": str(e),
             "message": "Failed to fetch schema",
         }
 
-@tool(name="run_sql_query", description="Executes a raw SQL query on the database and returns JSON.")
+@tool(name="run_sql_query", description="Executes a raw SQL query on the martial_arts_crm database and returns JSON.")
 def run_sql_query(query: str) -> str:
-    """Executes SQL queries using configured database connection.
-    Args:
-        query: SQL query to execute
-    Returns:
-        JSON string containing query results or error information
-    """
-    sql_tools = get_sql_tools()
+    """Executes SQL queries using Supabase Postgres."""
+    sql_tools = SQLTools(db_url=get_db_url(use_connection_pooling=True))
     try:
         result = sql_tools.run_sql_query(query)
         return json.dumps({
             "rows": result.get("rows", []),
             "count": len(result.get("rows", [])),
             "message": "Query successful"
-        }, indent=2)
+        })
     except Exception as e:
-        logger.error(f"Error in run_sql_query: {str(e)}", exc_info=True)
         return json.dumps({
             "error": str(e),
             "message": "Query failed"
-        }, indent=2) 
+        }) 
