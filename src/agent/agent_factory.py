@@ -9,6 +9,7 @@ from phi.tools.twilio import TwilioTools
 
 from ..db.message_logger import MessageLogger
 from ..db.organization_service import OrganizationService
+from ..db.config import get_db_url
 
 # Configure logging with more detail
 logging.basicConfig(
@@ -19,15 +20,15 @@ logger = logging.getLogger(__name__)
 
 class AgentFactory:
 
-    def __init__(self, db_url: str):
-        self.db_url = db_url
+    def __init__(self):
+        pass
         
     def create_agent(self, model: Optional[str] = None) -> Agent:
         """Create a new agent instance with SQL and Twilio tools"""
         return Agent(
             model=Claude(id=model or os.getenv("ANTHROPIC_MODEL")),
             tools=[
-                SQLTools(db_url=self.db_url),
+                SQLTools(db_url=get_db_url(use_connection_pooling=True)),
                 TwilioTools(),
             ],
             show_tool_calls=True,

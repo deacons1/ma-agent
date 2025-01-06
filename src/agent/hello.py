@@ -1,6 +1,5 @@
 import os
 from typing import Optional, List
-from urllib.parse import urlparse
 from dataclasses import dataclass
 from dotenv import load_dotenv
 
@@ -11,6 +10,7 @@ from phi.tools.twilio import TwilioTools
 from phi.storage.agent.postgres import PgAgentStorage
 
 from knowledge_base import knowledge_base
+from ..db.config import get_db_url
 
 AGENT_INSTRUCTIONS = """You are a powerful agentic AI assistant designed to help users with their tasks.
 You have access to a PostgreSQL database and can:
@@ -30,32 +30,6 @@ You also have access to Twilio for communication capabilities when needed.
 """
 
 @dataclass
-class DatabaseConfig:
-    """Database configuration parsed from URL"""
-    host: str
-    port: int
-    name: str
-    user: str
-    password: str
-    url: str
-
-    @classmethod
-    def from_url(cls, db_url: str) -> 'DatabaseConfig':
-        """Create DatabaseConfig from URL string"""
-        if not db_url:
-            raise ValueError("Database URL is required")
-        
-        parsed = urlparse(db_url)
-        return cls(
-            host=parsed.hostname,
-            port=parsed.port or 5432,
-            name=parsed.path[1:],  # Remove leading slash
-            user=parsed.username,
-            password=parsed.password,
-            url=db_url
-        )
-
-@dataclass
 class AgentConfig:
     """Configuration for the agent"""
     model_name: str = os.getenv("ANTHROPIC_MODEL", "gpt4o")
@@ -68,9 +42,9 @@ class AgentConfig:
     markdown: bool = True
     instructions: str = AGENT_INSTRUCTIONS
 
-def get_org_data(db_url: str, user_id: str) -> str:
+def get_org_data(user_id: str) -> str:
     """Fetch organization data and format it for instructions"""
-    sql = SQLTools(db_url=db_url)
+    sql = SQLTools(db_url=get_db_url(use_connection_pooling=True))
     query = """
     WITH user_org AS (
         SELECT organization_id 
@@ -111,15 +85,14 @@ def get_org_data(db_url: str, user_id: str) -> str:
 class AgentFactory:
     """Factory class for creating and configuring agents"""
     
-    def __init__(self, db_config: DatabaseConfig, agent_config: AgentConfig = AgentConfig()):
-        self.db_config = db_config
+    def __init__(self, agent_config: AgentConfig = AgentConfig()):
         self.agent_config = agent_config
     
     def create_storage(self) -> PgAgentStorage:
         """Create and configure agent storage"""
         return PgAgentStorage(
             table_name="agent_sessions",
-            db_url=self.db_config.url,
+            db_url=get_db_url(use_connection_pooling=True),
             auto_upgrade_schema=True
         )
     
@@ -136,14 +109,14 @@ class AgentFactory:
     def create_tools(self) -> List:
         """Create and configure agent tools"""
         return [
-            SQLTools(db_url=self.db_config.url),
+            SQLTools(db_url=get_db_url(use_connection_pooling=True)),
             TwilioTools(),
         ]
     
     def create_agent(self, run_id: Optional[str] = None, user_id: str = "0d2425a9-0663-4795-b9cb-52b1343a82de") -> Agent:
         """Create a fully configured agent"""
         # Get organization data for this user
-        org_data = get_org_data(self.db_config.url, user_id)
+        org_data = get_org_data(user_id)
         
         # Update instructions with org data
         instructions = AGENT_INSTRUCTIONS + "\n\n" + org_data
@@ -185,11 +158,8 @@ def main() -> None:
     # Validate environment
     validate_environment()
     
-    # Parse configuration
-    db_config = DatabaseConfig.from_url(os.getenv("DATABASE_URL"))
-    
     # Create agent factory
-    factory = AgentFactory(db_config)
+    factory = AgentFactory()
     
     # Create agent with configuration
     agent = factory.create_agent(user_id=os.getenv("USER_ID", "0d2425a9-0663-4795-b9cb-52b1343a82de"))

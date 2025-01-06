@@ -13,7 +13,7 @@ load_dotenv()
 app = FastAPI(title="PhiAgent API")
 
 # Create agent factory
-factory = AgentFactory(db_url=os.getenv("DATABASE_URL"))
+factory = AgentFactory()
 
 class PromptRequest(BaseModel):
     """Request model for prompt endpoint"""

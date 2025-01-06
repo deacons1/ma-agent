@@ -4,13 +4,14 @@ from phi.storage.assistant.postgres import PgAssistantStorage
 from phi.tools.sql import SQLTools
 import os
 from .tools import run_sql_query
+from ..db.config import get_db_url
 
 sql_agent = Agent(
     model=Claude(id=os.getenv("ANTHROPIC_MODEL")),
     tools=[run_sql_query],
     storage=PgAssistantStorage(
         table_name="martial_arts_assistant",
-        db_url=os.getenv("DATABASE_URL")
+        db_url=get_db_url(use_connection_pooling=True)
     ),
     show_tool_calls=True,
     read_chat_history=True,
