@@ -140,7 +140,7 @@ class AgentFactory:
             monitoring=True,
         )
         
-        # Load the knowledge base
+        # Load the knowledge base test
         agent.knowledge.load(recreate=False)
         return agent
 
